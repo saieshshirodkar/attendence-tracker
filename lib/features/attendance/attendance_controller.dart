@@ -81,7 +81,7 @@ class AttendanceController extends ChangeNotifier {
   }
 
   bool isSelectable(DateTime date) {
-    return _isWithinSemester(date) && !_isHoliday(date);
+    return !_isHoliday(date);
   }
 
   bool isHoliday(DateTime date) {
@@ -89,7 +89,10 @@ class AttendanceController extends ChangeNotifier {
   }
 
   bool isUnmarked(DateTime date) {
-    return isSelectable(date) && !isPresent(date) && !isAbsent(date);
+    return _isWithinSemester(date) &&
+        isSelectable(date) &&
+        !isPresent(date) &&
+        !isAbsent(date);
   }
 
   void goToPreviousMonth() {
