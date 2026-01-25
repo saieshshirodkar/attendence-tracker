@@ -6,6 +6,8 @@ class CalendarView extends StatelessWidget {
     super.key,
     required this.month,
     required this.isPresent,
+    required this.isSelectable,
+    required this.isHoliday,
     required this.onDayTap,
     required this.onPreviousMonth,
     required this.onNextMonth,
@@ -13,6 +15,8 @@ class CalendarView extends StatelessWidget {
 
   final DateTime month;
   final bool Function(DateTime date) isPresent;
+  final bool Function(DateTime date) isSelectable;
+  final bool Function(DateTime date) isHoliday;
   final void Function(DateTime date) onDayTap;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
@@ -24,67 +28,95 @@ class CalendarView extends StatelessWidget {
     final weekdayOffset = firstDay.weekday % 7;
     final totalCells = daysInMonth + weekdayOffset;
     final rows = (totalCells / 7).ceil();
+    final today = DateTime.now();
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            IconButton(
-              onPressed: onPreviousMonth,
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Expanded(
-              child: Text(
-                '${_monthName(month.month)} ${month.year}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity == null) {
+          return;
+        }
+        if (details.primaryVelocity! < 0) {
+          onNextMonth();
+        } else if (details.primaryVelocity! > 0) {
+          onPreviousMonth();
+        }
+      },
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: onPreviousMonth,
+                icon: const Icon(Icons.chevron_left),
               ),
-            ),
-            IconButton(
-              onPressed: onNextMonth,
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _WeekdayLabels(),
-        const SizedBox(height: 8),
-        Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-            ),
-            itemCount: rows * 7,
-            itemBuilder: (context, index) {
-              final dayNumber = index - weekdayOffset + 1;
-              if (dayNumber < 1 || dayNumber > daysInMonth) {
-                return const SizedBox.shrink();
-              }
-              final date = DateTime(month.year, month.month, dayNumber);
-              final present = isPresent(date);
-              return GestureDetector(
-                onTap: () => onDayTap(date),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: present ? AppTheme.accent : AppTheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$dayNumber',
-                    style: TextStyle(
-                      color: present ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  '${_monthName(month.month)} ${month.year}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              IconButton(
+                onPressed: onNextMonth,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _WeekdayLabels(),
+          const SizedBox(height: 8),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
+              ),
+              itemCount: rows * 7,
+              itemBuilder: (context, index) {
+                final dayNumber = index - weekdayOffset + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                  return const SizedBox.shrink();
+                }
+                final date = DateTime(month.year, month.month, dayNumber);
+                final present = isPresent(date);
+                final holiday = isHoliday(date);
+                final selectable = isSelectable(date);
+                final isToday = DateUtils.isSameDay(date, today);
+                final background = present ? AppTheme.accent : AppTheme.surface;
+                final textColor = present
+                    ? Colors.black
+                    : holiday
+                    ? AppTheme.textSecondary
+                    : Colors.white;
+                return GestureDetector(
+                  onTap: selectable ? () => onDayTap(date) : null,
+                  child: Opacity(
+                    opacity: selectable ? 1 : 0.5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? Border.all(color: AppTheme.accent, width: 2)
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$dayNumber',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

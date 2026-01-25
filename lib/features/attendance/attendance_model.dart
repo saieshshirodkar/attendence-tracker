@@ -28,6 +28,13 @@ class AttendanceData {
     return AttendanceData(presentDates: values.toSet());
   }
 
+  static DateTime dateFromKey(String key) {
+    final year = int.parse(key.substring(0, 4));
+    final month = int.parse(key.substring(5, 7));
+    final day = int.parse(key.substring(8, 10));
+    return DateTime(year, month, day);
+  }
+
   static String _keyFor(DateTime date) {
     final year = date.year.toString().padLeft(4, '0');
     final month = date.month.toString().padLeft(2, '0');

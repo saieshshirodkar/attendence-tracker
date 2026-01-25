@@ -5,13 +5,15 @@ class StatsHeader extends StatelessWidget {
   const StatsHeader({
     super.key,
     required this.totalPresent,
-    required this.currentMonthPresent,
+    required this.totalPossible,
     required this.percentage,
+    required this.remainingToTarget,
   });
 
   final int totalPresent;
-  final int currentMonthPresent;
+  final int totalPossible;
   final double percentage;
+  final int remainingToTarget;
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +25,13 @@ class StatsHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatItem(title: 'Total Days', value: totalPresent.toString()),
-          _StatItem(title: 'This Month', value: currentMonthPresent.toString()),
+          _StatItem(title: 'Present', value: totalPresent.toString()),
+          _StatItem(title: 'Total Days', value: totalPossible.toString()),
           _StatItem(
             title: 'Percent',
             value: '${percentage.toStringAsFixed(1)}%',
           ),
+          _StatItem(title: 'Needed', value: remainingToTarget.toString()),
         ],
       ),
     );

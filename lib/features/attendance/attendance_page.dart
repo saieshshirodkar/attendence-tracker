@@ -45,14 +45,17 @@ class _AttendancePageState extends State<AttendancePage> {
                 children: [
                   StatsHeader(
                     totalPresent: controller.totalPresent,
-                    currentMonthPresent: controller.currentMonthPresent,
+                    totalPossible: controller.totalPossibleDays,
                     percentage: controller.attendancePercentage,
+                    remainingToTarget: controller.remainingToTarget,
                   ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: CalendarView(
                       month: controller.activeMonth,
                       isPresent: controller.isPresent,
+                      isSelectable: controller.isSelectable,
+                      isHoliday: controller.isHoliday,
                       onDayTap: controller.toggleDate,
                       onPreviousMonth: controller.goToPreviousMonth,
                       onNextMonth: controller.goToNextMonth,

@@ -8,28 +8,37 @@ class AttendanceController extends ChangeNotifier {
   final AttendanceStorage storage;
   AttendanceData _data = const AttendanceData(presentDates: <String>{});
   bool _isLoading = true;
-  DateTime _activeMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime _activeMonth = DateTime(DateTime.now().year, 1);
+  late final DateTime _semesterStart = DateTime(DateTime.now().year, 1, 27);
+  late final DateTime _semesterEnd = DateTime(DateTime.now().year, 6, 5);
 
   AttendanceData get data => _data;
   bool get isLoading => _isLoading;
   DateTime get activeMonth => _activeMonth;
-  int get totalPresent => _data.presentDates.length;
+  int get totalPresent => _presentInRange(_semesterStart, _semesterEnd);
+
+  int get totalPossibleDays => _countPossibleDays(_semesterStart, _semesterEnd);
 
   int get currentMonthPresent {
-    final now = DateTime.now();
-    return _data.presentDates
-        .where((key) => AttendanceData.isSameMonthKey(key, now))
-        .length;
+    final monthStart = DateTime(_activeMonth.year, _activeMonth.month);
+    final monthEnd = DateTime(_activeMonth.year, _activeMonth.month + 1, 0);
+    return _presentInRange(monthStart, monthEnd);
   }
 
   double get attendancePercentage {
-    final now = DateTime.now();
-    final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
-    if (daysInMonth == 0) {
+    final possible = totalPossibleDays;
+    if (possible == 0) {
       return 0;
     }
-    final value = currentMonthPresent / daysInMonth * 100;
+    final value = totalPresent / possible * 100;
     return double.parse(value.toStringAsFixed(1));
+  }
+
+  int get requiredPresent => (totalPossibleDays * 0.75).ceil();
+
+  int get remainingToTarget {
+    final remaining = requiredPresent - totalPresent;
+    return remaining < 0 ? 0 : remaining;
   }
 
   Future<void> load() async {
@@ -42,6 +51,9 @@ class AttendanceController extends ChangeNotifier {
   }
 
   void toggleDate(DateTime date) {
+    if (!isSelectable(date)) {
+      return;
+    }
     _data = _data.toggle(date);
     storage.saveDates(_data.presentDates);
     notifyListeners();
@@ -49,6 +61,14 @@ class AttendanceController extends ChangeNotifier {
 
   bool isPresent(DateTime date) {
     return _data.isPresent(date);
+  }
+
+  bool isSelectable(DateTime date) {
+    return _isWithinSemester(date) && !_isHoliday(date);
+  }
+
+  bool isHoliday(DateTime date) {
+    return _isHoliday(date);
   }
 
   void goToPreviousMonth() {
@@ -59,5 +79,36 @@ class AttendanceController extends ChangeNotifier {
   void goToNextMonth() {
     _activeMonth = DateTime(_activeMonth.year, _activeMonth.month + 1);
     notifyListeners();
+  }
+
+  bool _isWithinSemester(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return !normalized.isBefore(_semesterStart) &&
+        !normalized.isAfter(_semesterEnd);
+  }
+
+  bool _isHoliday(DateTime date) {
+    return date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+  }
+
+  int _presentInRange(DateTime start, DateTime end) {
+    return _data.presentDates
+        .map(AttendanceData.dateFromKey)
+        .where((date) => !date.isBefore(start) && !date.isAfter(end))
+        .where((date) => !_isHoliday(date))
+        .length;
+  }
+
+  int _countPossibleDays(DateTime start, DateTime end) {
+    var count = 0;
+    var cursor = DateTime(start.year, start.month, start.day);
+    final last = DateTime(end.year, end.month, end.day);
+    while (!cursor.isAfter(last)) {
+      if (!_isHoliday(cursor)) {
+        count++;
+      }
+      cursor = cursor.add(const Duration(days: 1));
+    }
+    return count;
   }
 }
