@@ -1,3 +1,4 @@
+import 'package:attendance_tracker/core/notifications.dart';
 import 'package:attendance_tracker/core/storage.dart';
 import 'package:attendance_tracker/core/theme.dart';
 import 'package:attendance_tracker/features/attendance/attendance_controller.dart';
@@ -14,18 +15,52 @@ class AttendancePage extends StatefulWidget {
 
 class _AttendancePageState extends State<AttendancePage> {
   late final AttendanceController controller;
+  final NotificationService _notificationService = NotificationService();
+  bool _notificationsEnabled = false;
+  bool _reminderSentForToday = false;
 
   @override
   void initState() {
     super.initState();
     controller = AttendanceController(storage: AttendanceStorage());
     controller.load();
+    _notificationService.initialize();
+    controller.addListener(_handleReminder);
   }
 
   @override
   void dispose() {
+    controller.removeListener(_handleReminder);
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleReminder() async {
+    if (controller.isLoading || !_notificationsEnabled) {
+      return;
+    }
+    final today = DateTime.now();
+    if (_reminderSentForToday) {
+      return;
+    }
+    if (controller.isUnmarked(today)) {
+      _reminderSentForToday = true;
+      await _notificationService.showReminder();
+    }
+  }
+
+  Future<void> _toggleNotification() async {
+    final next = !_notificationsEnabled;
+    setState(() {
+      _notificationsEnabled = next;
+      if (!next) {
+        _reminderSentForToday = false;
+      }
+    });
+    if (next) {
+      _reminderSentForToday = false;
+      await _handleReminder();
+    }
   }
 
   @override
@@ -54,9 +89,11 @@ class _AttendancePageState extends State<AttendancePage> {
                     child: CalendarView(
                       month: controller.activeMonth,
                       isPresent: controller.isPresent,
+                      isAbsent: controller.isAbsent,
                       isSelectable: controller.isSelectable,
                       isHoliday: controller.isHoliday,
                       onDayTap: controller.toggleDate,
+                      onDayLongPress: controller.toggleAbsent,
                       onPreviousMonth: controller.goToPreviousMonth,
                       onNextMonth: controller.goToNextMonth,
                     ),
@@ -70,10 +107,12 @@ class _AttendancePageState extends State<AttendancePage> {
                         foregroundColor: AppTheme.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: () {
-                        controller.toggleDate(DateTime.now());
-                      },
-                      child: const Text('Toggle Today'),
+                      onPressed: _toggleNotification,
+                      child: Text(
+                        _notificationsEnabled
+                            ? 'Disable Reminder'
+                            : 'Test Reminder',
+                      ),
                     ),
                   ),
                 ],

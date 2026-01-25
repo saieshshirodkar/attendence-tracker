@@ -6,18 +6,22 @@ class CalendarView extends StatelessWidget {
     super.key,
     required this.month,
     required this.isPresent,
+    required this.isAbsent,
     required this.isSelectable,
     required this.isHoliday,
     required this.onDayTap,
+    required this.onDayLongPress,
     required this.onPreviousMonth,
     required this.onNextMonth,
   });
 
   final DateTime month;
   final bool Function(DateTime date) isPresent;
+  final bool Function(DateTime date) isAbsent;
   final bool Function(DateTime date) isSelectable;
   final bool Function(DateTime date) isHoliday;
   final void Function(DateTime date) onDayTap;
+  final void Function(DateTime date) onDayLongPress;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
 
@@ -80,20 +84,31 @@ class CalendarView extends StatelessWidget {
                 }
                 final date = DateTime(month.year, month.month, dayNumber);
                 final present = isPresent(date);
+                final absent = isAbsent(date);
                 final holiday = isHoliday(date);
                 final selectable = isSelectable(date);
                 final isToday = DateUtils.isSameDay(date, today);
-                final background = present ? AppTheme.accent : AppTheme.surface;
+                final background = present
+                    ? AppTheme.accent
+                    : absent
+                    ? const Color(0xFFE05555)
+                    : AppTheme.surface;
                 final textColor = present
                     ? Colors.black
+                    : absent
+                    ? Colors.white
                     : holiday
                     ? AppTheme.textSecondary
                     : Colors.white;
                 return GestureDetector(
                   onTap: selectable ? () => onDayTap(date) : null,
-                  child: Opacity(
-                    opacity: selectable ? 1 : 0.5,
-                    child: Container(
+                  onLongPress: selectable ? () => onDayLongPress(date) : null,
+                  child: AnimatedScale(
+                    scale: (present || absent) ? 1 : 0.97,
+                    duration: const Duration(milliseconds: 180),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
                       decoration: BoxDecoration(
                         color: background,
                         borderRadius: BorderRadius.circular(12),

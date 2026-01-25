@@ -6,7 +6,10 @@ class AttendanceController extends ChangeNotifier {
   AttendanceController({required this.storage});
 
   final AttendanceStorage storage;
-  AttendanceData _data = const AttendanceData(presentDates: <String>{});
+  AttendanceData _data = const AttendanceData(
+    presentDates: <String>{},
+    absentDates: <String>{},
+  );
   bool _isLoading = true;
   DateTime _activeMonth = DateTime(DateTime.now().year, 1);
   late final DateTime _semesterStart = DateTime(DateTime.now().year, 1, 27);
@@ -44,8 +47,9 @@ class AttendanceController extends ChangeNotifier {
   Future<void> load() async {
     _isLoading = true;
     notifyListeners();
-    final stored = await storage.loadDates();
-    _data = AttendanceData.fromList(stored);
+    final storedPresent = await storage.loadPresentDates();
+    final storedAbsent = await storage.loadAbsentDates();
+    _data = AttendanceData.fromLists(storedPresent, storedAbsent);
     _isLoading = false;
     notifyListeners();
   }
@@ -55,12 +59,25 @@ class AttendanceController extends ChangeNotifier {
       return;
     }
     _data = _data.toggle(date);
-    storage.saveDates(_data.presentDates);
+    storage.saveDates(present: _data.presentDates, absent: _data.absentDates);
+    notifyListeners();
+  }
+
+  void toggleAbsent(DateTime date) {
+    if (!isSelectable(date)) {
+      return;
+    }
+    _data = _data.toggleAbsent(date);
+    storage.saveDates(present: _data.presentDates, absent: _data.absentDates);
     notifyListeners();
   }
 
   bool isPresent(DateTime date) {
     return _data.isPresent(date);
+  }
+
+  bool isAbsent(DateTime date) {
+    return _data.isAbsent(date);
   }
 
   bool isSelectable(DateTime date) {
@@ -69,6 +86,10 @@ class AttendanceController extends ChangeNotifier {
 
   bool isHoliday(DateTime date) {
     return _isHoliday(date);
+  }
+
+  bool isUnmarked(DateTime date) {
+    return isSelectable(date) && !isPresent(date) && !isAbsent(date);
   }
 
   void goToPreviousMonth() {

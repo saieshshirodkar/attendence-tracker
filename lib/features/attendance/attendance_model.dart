@@ -1,31 +1,58 @@
 class AttendanceData {
   final Set<String> presentDates;
+  final Set<String> absentDates;
 
-  const AttendanceData({required this.presentDates});
+  const AttendanceData({required this.presentDates, required this.absentDates});
 
-  AttendanceData copyWith({Set<String>? presentDates}) {
-    return AttendanceData(presentDates: presentDates ?? this.presentDates);
+  AttendanceData copyWith({
+    Set<String>? presentDates,
+    Set<String>? absentDates,
+  }) {
+    return AttendanceData(
+      presentDates: presentDates ?? this.presentDates,
+      absentDates: absentDates ?? this.absentDates,
+    );
   }
 
   AttendanceData toggle(DateTime date) {
     final updated = Set<String>.from(presentDates);
+    final updatedAbsent = Set<String>.from(absentDates);
     final key = _keyFor(date);
     if (!updated.remove(key)) {
       updated.add(key);
     }
-    return AttendanceData(presentDates: updated);
+    updatedAbsent.remove(key);
+    return AttendanceData(presentDates: updated, absentDates: updatedAbsent);
+  }
+
+  AttendanceData toggleAbsent(DateTime date) {
+    final updated = Set<String>.from(absentDates);
+    final updatedPresent = Set<String>.from(presentDates);
+    final key = _keyFor(date);
+    if (!updated.remove(key)) {
+      updated.add(key);
+    }
+    updatedPresent.remove(key);
+    return AttendanceData(presentDates: updatedPresent, absentDates: updated);
   }
 
   bool isPresent(DateTime date) {
     return presentDates.contains(_keyFor(date));
   }
 
+  bool isAbsent(DateTime date) {
+    return absentDates.contains(_keyFor(date));
+  }
+
   List<String> toList() {
     return presentDates.toList();
   }
 
-  static AttendanceData fromList(List<String> values) {
-    return AttendanceData(presentDates: values.toSet());
+  static AttendanceData fromLists(List<String> present, List<String> absent) {
+    return AttendanceData(
+      presentDates: present.toSet(),
+      absentDates: absent.toSet(),
+    );
   }
 
   static DateTime dateFromKey(String key) {
@@ -33,6 +60,10 @@ class AttendanceData {
     final month = int.parse(key.substring(5, 7));
     final day = int.parse(key.substring(8, 10));
     return DateTime(year, month, day);
+  }
+
+  static String keyFor(DateTime date) {
+    return _keyFor(date);
   }
 
   static String _keyFor(DateTime date) {
