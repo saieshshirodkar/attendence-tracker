@@ -36,6 +36,16 @@ class AttendanceData {
     return AttendanceData(presentDates: updatedPresent, absentDates: updated);
   }
 
+  AttendanceData clear(DateTime date) {
+    final key = _keyFor(date);
+    final updatedPresent = Set<String>.from(presentDates)..remove(key);
+    final updatedAbsent = Set<String>.from(absentDates)..remove(key);
+    return AttendanceData(
+      presentDates: updatedPresent,
+      absentDates: updatedAbsent,
+    );
+  }
+
   bool isPresent(DateTime date) {
     return presentDates.contains(_keyFor(date));
   }

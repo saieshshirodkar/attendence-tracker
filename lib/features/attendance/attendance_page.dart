@@ -24,7 +24,6 @@ class _AttendancePageState extends State<AttendancePage> {
     super.initState();
     controller = AttendanceController(storage: AttendanceStorage());
     controller.load();
-    _notificationService.initialize();
     controller.addListener(_handleReminder);
   }
 
@@ -58,7 +57,9 @@ class _AttendancePageState extends State<AttendancePage> {
       }
     });
     if (next) {
-      _reminderSentForToday = false;
+      _reminderSentForToday = true;
+      await _notificationService.initialize();
+      await _notificationService.showReminder();
       await _handleReminder();
     }
   }
@@ -91,6 +92,7 @@ class _AttendancePageState extends State<AttendancePage> {
                       isPresent: controller.isPresent,
                       isAbsent: controller.isAbsent,
                       isSelectable: controller.isSelectable,
+                      isWithinSemester: controller.isWithinSemester,
                       isHoliday: controller.isHoliday,
                       onDayTap: controller.toggleDate,
                       onDayLongPress: controller.toggleAbsent,
