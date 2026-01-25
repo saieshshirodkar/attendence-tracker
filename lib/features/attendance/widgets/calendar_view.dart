@@ -35,10 +35,9 @@ class CalendarView extends StatelessWidget {
     final today = DateTime.now();
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity == null) {
-          return;
-        }
+        if (details.primaryVelocity == null) return;
         if (details.primaryVelocity! < 0) {
           onNextMonth();
         } else if (details.primaryVelocity! > 0) {
@@ -49,21 +48,25 @@ class CalendarView extends StatelessWidget {
         children: [
           Row(
             children: [
-              IconButton(
-                onPressed: onPreviousMonth,
-                icon: const Icon(Icons.chevron_left),
-              ),
+              _CircleButton(icon: Icons.chevron_left, onTap: onPreviousMonth),
               Expanded(
-                child: Text(
-                  '${_monthName(month.month)} ${month.year}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                child: Column(
+                  children: [
+                    Text(
+                      '${_monthName(month.month)}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${month.year}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                onPressed: onNextMonth,
-                icon: const Icon(Icons.chevron_right),
-              ),
+              _CircleButton(icon: Icons.chevron_right, onTap: onNextMonth),
             ],
           ),
           const SizedBox(height: 12),
@@ -71,10 +74,11 @@ class CalendarView extends StatelessWidget {
           const SizedBox(height: 8),
           Expanded(
             child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
-                mainAxisSpacing: 6,
-                crossAxisSpacing: 6,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
               ),
               itemCount: rows * 7,
               itemBuilder: (context, index) {
@@ -92,9 +96,9 @@ class CalendarView extends StatelessWidget {
                 final background = present
                     ? AppTheme.accent
                     : absent
-                    ? const Color(0xFFE05555)
+                    ? AppTheme.error
                     : disabled
-                    ? AppTheme.surface.withOpacity(0.4)
+                    ? AppTheme.surfaceMuted
                     : AppTheme.surface;
                 final textColor = present
                     ? Colors.black
@@ -109,16 +113,28 @@ class CalendarView extends StatelessWidget {
                   onTap: selectable ? () => onDayTap(date) : null,
                   onLongPress: selectable ? () => onDayLongPress(date) : null,
                   child: AnimatedScale(
-                    scale: (present || absent) ? 1 : 0.97,
+                    scale: (present || absent) ? 1 : 0.98,
                     duration: const Duration(milliseconds: 180),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
                       decoration: BoxDecoration(
                         color: background,
                         borderRadius: BorderRadius.circular(12),
                         border: isToday
                             ? Border.all(color: AppTheme.accent, width: 2)
+                            : Border.all(
+                                color: Colors.white.withOpacity(0.04),
+                                width: 1,
+                              ),
+                        boxShadow: present || absent
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.35),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
                             : null,
                       ),
                       alignment: Alignment.center,
@@ -126,7 +142,7 @@ class CalendarView extends StatelessWidget {
                         '$dayNumber',
                         style: TextStyle(
                           color: textColor,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -175,6 +191,37 @@ class _WeekdayLabels extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  const _CircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        width: 40,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceMuted,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 10,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: AppTheme.textPrimary),
+      ),
     );
   }
 }

@@ -42,26 +42,15 @@ class StatsHeader extends StatelessWidget {
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 360;
-          final crossAxisCount = isWide ? 2 : 1;
-          final spacing = isWide ? 14.0 : 10.0;
-          return Wrap(
-            runSpacing: spacing,
-            spacing: spacing,
-            children: items
-                .map(
-                  (item) => SizedBox(
-                    width:
-                        (constraints.maxWidth - spacing) / crossAxisCount -
-                        spacing,
-                    child: _StatItem(title: item.title, value: item.value),
-                  ),
-                )
-                .toList(),
-          );
-        },
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            Expanded(
+              child: _StatItem(title: items[i].title, value: items[i].value),
+            ),
+            if (i != items.length - 1) const SizedBox(width: 14),
+          ],
+        ],
       ),
     );
   }

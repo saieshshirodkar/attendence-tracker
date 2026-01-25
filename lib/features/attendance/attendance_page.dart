@@ -59,8 +59,9 @@ class _AttendancePageState extends State<AttendancePage> {
               return const Center(child: CircularProgressIndicator());
             }
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   StatsHeader(
                     totalPresent: controller.totalPresent,
@@ -68,7 +69,7 @@ class _AttendancePageState extends State<AttendancePage> {
                     percentage: controller.attendancePercentage,
                     remainingToTarget: controller.remainingToTarget,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(14),
@@ -76,12 +77,12 @@ class _AttendancePageState extends State<AttendancePage> {
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.06),
+                          color: Colors.white.withOpacity(0.05),
                         ),
                         boxShadow: const [
                           BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 16,
+                            color: Colors.black45,
+                            blurRadius: 14,
                             offset: Offset(0, 10),
                           ),
                         ],
