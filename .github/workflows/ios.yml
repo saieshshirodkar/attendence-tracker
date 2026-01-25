@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -29,6 +32,20 @@ jobs:
           mkdir -p build/ios/ipa/Payload
           cp -R build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/ipa/Payload/
           /usr/bin/ditto -c -k --sequesterRsrc --keepParent build/ios/ipa/Payload build/ios/ipa/Runner.ipa
+
+      - name: Extract version tag
+        id: version
+        run: echo "tag=v$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          files: build/ios/ipa/Runner.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
