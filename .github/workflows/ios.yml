@@ -35,7 +35,18 @@ jobs:
 
       - name: Extract version tag
         id: version
-        run: echo "tag=v$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          if [[ ! "$version" =~ ^1\. ]]; then
+            echo "Version must stay in 1.x (current: $version)"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Rename IPA
+        run: |
+          mv build/ios/ipa/Runner.ipa "build/ios/ipa/Attendance-Tracker-v${{ steps.version.outputs.version }}.ipa"
 
       - name: Publish GitHub Release
         if: github.ref == 'refs/heads/main'
@@ -43,7 +54,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
-          files: build/ios/ipa/Runner.ipa
+          files: build/ios/ipa/Attendance-Tracker-v${{ steps.version.outputs.version }}.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

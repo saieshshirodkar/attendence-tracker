@@ -8,7 +8,6 @@ class CalendarView extends StatelessWidget {
     required this.isPresent,
     required this.isAbsent,
     required this.isSelectable,
-    required this.isWithinSemester,
     required this.isHoliday,
     required this.onDayTap,
     required this.onDayLongPress,
@@ -20,7 +19,6 @@ class CalendarView extends StatelessWidget {
   final bool Function(DateTime date) isPresent;
   final bool Function(DateTime date) isAbsent;
   final bool Function(DateTime date) isSelectable;
-  final bool Function(DateTime date) isWithinSemester;
   final bool Function(DateTime date) isHoliday;
   final void Function(DateTime date) onDayTap;
   final void Function(DateTime date) onDayLongPress;
@@ -47,113 +45,97 @@ class CalendarView extends StatelessWidget {
           onPreviousMonth();
         }
       },
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        transitionBuilder: (child, animation) {
-          final offsetAnimation = Tween<Offset>(
-            begin: const Offset(0.08, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
-          return SlideTransition(position: offsetAnimation, child: child);
-        },
-        child: Column(
-          key: ValueKey('${month.year}-${month.month}'),
-          children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: onPreviousMonth,
-                  icon: const Icon(Icons.chevron_left),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: onPreviousMonth,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Expanded(
+                child: Text(
+                  '${_monthName(month.month)} ${month.year}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                Expanded(
-                  child: Text(
-                    '${_monthName(month.month)} ${month.year}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                IconButton(
-                  onPressed: onNextMonth,
-                  icon: const Icon(Icons.chevron_right),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _WeekdayLabels(),
-            const SizedBox(height: 8),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                ),
-                itemCount: rows * 7,
-                itemBuilder: (context, index) {
-                  final dayNumber = index - weekdayOffset + 1;
-                  if (dayNumber < 1 || dayNumber > daysInMonth) {
-                    return const SizedBox.shrink();
-                  }
-                  final date = DateTime(month.year, month.month, dayNumber);
-                  final present = isPresent(date);
-                  final absent = isAbsent(date);
-                  final holiday = isHoliday(date);
-                  final selectable = isSelectable(date);
-                  final inSemester = isWithinSemester(date);
-                  final isToday = DateUtils.isSameDay(date, today);
-                  final background = present
-                      ? AppTheme.accent
-                      : absent
-                      ? const Color(0xFFE05555)
-                      : AppTheme.surface;
-                  final textColor = present
-                      ? Colors.black
-                      : absent
-                      ? Colors.white
-                      : holiday
-                      ? AppTheme.textSecondary
-                      : Colors.white;
-                  final disabled = !inSemester;
-                  return GestureDetector(
-                    onTap: selectable ? () => onDayTap(date) : null,
-                    onLongPress: selectable ? () => onDayLongPress(date) : null,
-                    child: AnimatedOpacity(
+              ),
+              IconButton(
+                onPressed: onNextMonth,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _WeekdayLabels(),
+          const SizedBox(height: 8),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
+              ),
+              itemCount: rows * 7,
+              itemBuilder: (context, index) {
+                final dayNumber = index - weekdayOffset + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                  return const SizedBox.shrink();
+                }
+                final date = DateTime(month.year, month.month, dayNumber);
+                final present = isPresent(date);
+                final absent = isAbsent(date);
+                final holiday = isHoliday(date);
+                final selectable = isSelectable(date);
+                final isToday = DateUtils.isSameDay(date, today);
+                final disabled = !selectable;
+                final background = present
+                    ? AppTheme.accent
+                    : absent
+                    ? const Color(0xFFE05555)
+                    : disabled
+                    ? AppTheme.surface.withOpacity(0.4)
+                    : AppTheme.surface;
+                final textColor = present
+                    ? Colors.black
+                    : absent
+                    ? Colors.white
+                    : disabled
+                    ? AppTheme.textSecondary.withOpacity(0.6)
+                    : holiday
+                    ? AppTheme.textSecondary
+                    : Colors.white;
+                return GestureDetector(
+                  onTap: selectable ? () => onDayTap(date) : null,
+                  onLongPress: selectable ? () => onDayLongPress(date) : null,
+                  child: AnimatedScale(
+                    scale: (present || absent) ? 1 : 0.97,
+                    duration: const Duration(milliseconds: 180),
+                    child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      opacity: disabled ? 0.35 : 1,
-                      child: AnimatedScale(
-                        scale: (present || absent) ? 1 : 0.97,
-                        duration: const Duration(milliseconds: 180),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                          decoration: BoxDecoration(
-                            color: background,
-                            borderRadius: BorderRadius.circular(12),
-                            border: isToday
-                                ? Border.all(color: AppTheme.accent, width: 2)
-                                : null,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '$dayNumber',
-                            style: TextStyle(
-                              color: disabled
-                                  ? AppTheme.textSecondary
-                                  : textColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      curve: Curves.easeOut,
+                      decoration: BoxDecoration(
+                        color: background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? Border.all(color: AppTheme.accent, width: 2)
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$dayNumber',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

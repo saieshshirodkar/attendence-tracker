@@ -3,7 +3,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
-  bool _initialized = false;
 
   Future<void> initialize() async {
     const androidSettings = AndroidInitializationSettings(
@@ -15,7 +14,6 @@ class NotificationService {
       iOS: iosSettings,
     );
     await _plugin.initialize(settings);
-    _initialized = true;
     final androidImplementation = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -29,9 +27,6 @@ class NotificationService {
   }
 
   Future<void> showReminder() async {
-    if (!_initialized) {
-      await initialize();
-    }
     const androidDetails = AndroidNotificationDetails(
       'attendance_reminder',
       'Attendance Reminder',

@@ -58,7 +58,11 @@ class AttendanceController extends ChangeNotifier {
     if (!isSelectable(date)) {
       return;
     }
-    _data = isAbsent(date) ? _data.clear(date) : _data.toggle(date);
+    if (_data.isAbsent(date)) {
+      _data = _data.toggleAbsent(date);
+    } else {
+      _data = _data.toggle(date);
+    }
     storage.saveDates(present: _data.presentDates, absent: _data.absentDates);
     notifyListeners();
   }
@@ -86,10 +90,6 @@ class AttendanceController extends ChangeNotifier {
 
   bool isHoliday(DateTime date) {
     return _isHoliday(date);
-  }
-
-  bool isWithinSemester(DateTime date) {
-    return _isWithinSemester(date);
   }
 
   bool isUnmarked(DateTime date) {

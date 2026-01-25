@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:attendance_tracker/core/notifications.dart';
 import 'package:attendance_tracker/core/storage.dart';
 import 'package:attendance_tracker/core/theme.dart';
@@ -18,12 +19,15 @@ class _AttendancePageState extends State<AttendancePage> {
   final NotificationService _notificationService = NotificationService();
   bool _notificationsEnabled = false;
   bool _reminderSentForToday = false;
+  bool _isReverse = false;
+  late final Future<void> _notificationReady;
 
   @override
   void initState() {
     super.initState();
     controller = AttendanceController(storage: AttendanceStorage());
     controller.load();
+    _notificationReady = _notificationService.initialize();
     controller.addListener(_handleReminder);
   }
 
@@ -44,6 +48,7 @@ class _AttendancePageState extends State<AttendancePage> {
     }
     if (controller.isUnmarked(today)) {
       _reminderSentForToday = true;
+      await _notificationReady;
       await _notificationService.showReminder();
     }
   }
@@ -58,10 +63,23 @@ class _AttendancePageState extends State<AttendancePage> {
     });
     if (next) {
       _reminderSentForToday = true;
-      await _notificationService.initialize();
+      await _notificationReady;
       await _notificationService.showReminder();
-      await _handleReminder();
     }
+  }
+
+  void _goToPreviousMonth() {
+    setState(() {
+      _isReverse = true;
+    });
+    controller.goToPreviousMonth();
+  }
+
+  void _goToNextMonth() {
+    setState(() {
+      _isReverse = false;
+    });
+    controller.goToNextMonth();
   }
 
   @override
@@ -87,17 +105,33 @@ class _AttendancePageState extends State<AttendancePage> {
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: CalendarView(
-                      month: controller.activeMonth,
-                      isPresent: controller.isPresent,
-                      isAbsent: controller.isAbsent,
-                      isSelectable: controller.isSelectable,
-                      isWithinSemester: controller.isWithinSemester,
-                      isHoliday: controller.isHoliday,
-                      onDayTap: controller.toggleDate,
-                      onDayLongPress: controller.toggleAbsent,
-                      onPreviousMonth: controller.goToPreviousMonth,
-                      onNextMonth: controller.goToNextMonth,
+                    child: PageTransitionSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      reverse: _isReverse,
+                      transitionBuilder:
+                          (child, animation, secondaryAnimation) {
+                            return SharedAxisTransition(
+                              animation: animation,
+                              secondaryAnimation: secondaryAnimation,
+                              transitionType:
+                                  SharedAxisTransitionType.horizontal,
+                              child: child,
+                            );
+                          },
+                      child: CalendarView(
+                        key: ValueKey(
+                          '${controller.activeMonth.year}-${controller.activeMonth.month}',
+                        ),
+                        month: controller.activeMonth,
+                        isPresent: controller.isPresent,
+                        isAbsent: controller.isAbsent,
+                        isSelectable: controller.isSelectable,
+                        isHoliday: controller.isHoliday,
+                        onDayTap: controller.toggleDate,
+                        onDayLongPress: controller.toggleAbsent,
+                        onPreviousMonth: _goToPreviousMonth,
+                        onNextMonth: _goToNextMonth,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
