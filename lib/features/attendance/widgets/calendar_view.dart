@@ -13,6 +13,8 @@ class CalendarView extends StatelessWidget {
     required this.onDayLongPress,
     required this.onPreviousMonth,
     required this.onNextMonth,
+    required this.canGoPrevious,
+    required this.canGoNext,
   });
 
   final DateTime month;
@@ -24,6 +26,8 @@ class CalendarView extends StatelessWidget {
   final void Function(DateTime date) onDayLongPress;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
+  final bool canGoPrevious;
+  final bool canGoNext;
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +42,9 @@ class CalendarView extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity == null) return;
-        if (details.primaryVelocity! < 0) {
+        if (details.primaryVelocity! < 0 && canGoNext) {
           onNextMonth();
-        } else if (details.primaryVelocity! > 0) {
+        } else if (details.primaryVelocity! > 0 && canGoPrevious) {
           onPreviousMonth();
         }
       },
@@ -48,7 +52,11 @@ class CalendarView extends StatelessWidget {
         children: [
           Row(
             children: [
-              _CircleButton(icon: Icons.chevron_left, onTap: onPreviousMonth),
+              _CircleButton(
+                icon: Icons.chevron_left,
+                onTap: canGoPrevious ? onPreviousMonth : null,
+                enabled: canGoPrevious,
+              ),
               Expanded(
                 child: Column(
                   children: [
@@ -66,7 +74,11 @@ class CalendarView extends StatelessWidget {
                   ],
                 ),
               ),
-              _CircleButton(icon: Icons.chevron_right, onTap: onNextMonth),
+              _CircleButton(
+                icon: Icons.chevron_right,
+                onTap: canGoNext ? onNextMonth : null,
+                enabled: canGoNext,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -196,10 +208,15 @@ class _WeekdayLabels extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap});
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.enabled = true,
+  });
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -209,18 +226,29 @@ class _CircleButton extends StatelessWidget {
         height: 40,
         width: 40,
         decoration: BoxDecoration(
-          color: AppTheme.surfaceMuted,
+          color: enabled ? AppTheme.surfaceMuted : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black38,
-              blurRadius: 10,
-              offset: Offset(0, 6),
-            ),
-          ],
+          border: Border.all(
+            color: enabled
+                ? Colors.white.withOpacity(0.06)
+                : Colors.white.withOpacity(0.02),
+          ),
+          boxShadow: enabled
+              ? const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 10,
+                    offset: Offset(0, 6),
+                  ),
+                ]
+              : null,
         ),
-        child: Icon(icon, color: AppTheme.textPrimary),
+        child: Icon(
+          icon,
+          color: enabled
+              ? AppTheme.textPrimary
+              : AppTheme.textSecondary.withOpacity(0.2),
+        ),
       ),
     );
   }

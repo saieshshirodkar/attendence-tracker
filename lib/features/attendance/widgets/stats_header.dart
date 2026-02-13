@@ -17,71 +17,109 @@ class StatsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _Stat(title: 'Present', value: totalPresent.toString()),
-      _Stat(title: 'Total Days', value: totalPossible.toString()),
-      _Stat(title: 'Percent', value: '${percentage.toStringAsFixed(1)}%'),
-      _Stat(title: 'Needed', value: remainingToTarget.toString()),
-    ];
-
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.surface, AppTheme.surface.withOpacity(0.85)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 18,
-            offset: Offset(0, 8),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${percentage.toStringAsFixed(1)}%',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppTheme.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _StatBox(
+                  label: 'Present',
+                  value: '$totalPresent',
+                  subValue: '/$totalPossible',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatBox(
+                  label: 'Need for 75%',
+                  value: '$remainingToTarget',
+                  isHighlighted: remainingToTarget > 0,
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      child: Row(
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  const _StatBox({
+    required this.label,
+    required this.value,
+    this.subValue,
+    this.isHighlighted = false,
+  });
+
+  final String label;
+  final String value;
+  final String? subValue;
+  final bool isHighlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? AppTheme.accent.withOpacity(0.1)
+            : Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
         children: [
-          for (var i = 0; i < items.length; i++) ...[
-            Expanded(
-              child: _StatItem(title: items[i].title, value: items[i].value),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppTheme.textSecondary,
+              fontSize: 11,
             ),
-            if (i != items.length - 1) const SizedBox(width: 14),
-          ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isHighlighted ? AppTheme.accent : null,
+                ),
+              ),
+              if (subValue != null)
+                Text(
+                  subValue!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
   }
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 6),
-        Text(value, style: Theme.of(context).textTheme.headlineSmall),
-      ],
-    );
-  }
-}
-
-class _Stat {
-  const _Stat({required this.title, required this.value});
-  final String title;
-  final String value;
 }

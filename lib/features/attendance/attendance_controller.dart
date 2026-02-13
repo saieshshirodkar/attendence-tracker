@@ -99,12 +99,18 @@ class AttendanceController extends ChangeNotifier {
         !isAbsent(date);
   }
 
+  bool get canGoToPreviousMonth => _activeMonth.month > 1;
+
+  bool get canGoToNextMonth => _activeMonth.month < 6;
+
   void goToPreviousMonth() {
+    if (!canGoToPreviousMonth) return;
     _activeMonth = DateTime(_activeMonth.year, _activeMonth.month - 1);
     notifyListeners();
   }
 
   void goToNextMonth() {
+    if (!canGoToNextMonth) return;
     _activeMonth = DateTime(_activeMonth.year, _activeMonth.month + 1);
     notifyListeners();
   }

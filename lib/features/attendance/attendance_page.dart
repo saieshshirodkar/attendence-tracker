@@ -113,6 +113,8 @@ class _AttendancePageState extends State<AttendancePage> {
                           onDayLongPress: controller.toggleAbsent,
                           onPreviousMonth: _goToPreviousMonth,
                           onNextMonth: _goToNextMonth,
+                          canGoPrevious: controller.canGoToPreviousMonth,
+                          canGoNext: controller.canGoToNextMonth,
                         ),
                       ),
                     ),
