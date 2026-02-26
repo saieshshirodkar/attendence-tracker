@@ -38,133 +38,112 @@ class CalendarView extends StatelessWidget {
     final rows = (totalCells / 7).ceil();
     final today = DateTime.now();
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity == null) return;
-        if (details.primaryVelocity! < 0 && canGoNext) {
-          onNextMonth();
-        } else if (details.primaryVelocity! > 0 && canGoPrevious) {
-          onPreviousMonth();
-        }
-      },
-      child: Column(
-        children: [
-          Row(
-            children: [
-              _CircleButton(
-                icon: Icons.chevron_left,
-                onTap: canGoPrevious ? onPreviousMonth : null,
-                enabled: canGoPrevious,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      '${_monthName(month.month)}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${month.year}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _monthName(month.month).toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall,
                 ),
-              ),
-              _CircleButton(
-                icon: Icons.chevron_right,
-                onTap: canGoNext ? onNextMonth : null,
-                enabled: canGoNext,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _WeekdayLabels(),
-          const SizedBox(height: 8),
-          Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemCount: rows * 7,
-              itemBuilder: (context, index) {
-                final dayNumber = index - weekdayOffset + 1;
-                if (dayNumber < 1 || dayNumber > daysInMonth) {
-                  return const SizedBox.shrink();
-                }
-                final date = DateTime(month.year, month.month, dayNumber);
-                final present = isPresent(date);
-                final absent = isAbsent(date);
-                final holiday = isHoliday(date);
-                final selectable = isSelectable(date);
-                final isToday = DateUtils.isSameDay(date, today);
-                final disabled = !selectable;
-                final background = present
-                    ? AppTheme.accent
-                    : absent
-                    ? AppTheme.error
-                    : disabled
-                    ? AppTheme.surfaceMuted
-                    : AppTheme.surface;
-                final textColor = present
-                    ? Colors.black
-                    : absent
-                    ? Colors.white
-                    : disabled
-                    ? AppTheme.textSecondary.withOpacity(0.6)
-                    : holiday
-                    ? AppTheme.textSecondary
-                    : Colors.white;
-                return GestureDetector(
-                  onTap: selectable ? () => onDayTap(date) : null,
-                  onLongPress: selectable ? () => onDayLongPress(date) : null,
-                  child: AnimatedScale(
-                    scale: (present || absent) ? 1 : 0.98,
-                    duration: const Duration(milliseconds: 180),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      decoration: BoxDecoration(
-                        color: background,
-                        borderRadius: BorderRadius.circular(12),
-                        border: isToday
-                            ? Border.all(color: AppTheme.accent, width: 2)
-                            : Border.all(
-                                color: Colors.white.withOpacity(0.04),
-                                width: 1,
-                              ),
-                        boxShadow: present || absent
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.35),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$dayNumber',
-                        style: TextStyle(
-                          color: textColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                Text(
+                  '${month.year}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: canGoPrevious ? onPreviousMonth : null,
+                  icon: const Icon(Icons.arrow_back_ios_new),
+                  color: canGoPrevious
+                      ? AppTheme.textPrimary
+                      : AppTheme.textSecondary.withValues(alpha: 0.3),
+                ),
+                IconButton(
+                  onPressed: canGoNext ? onNextMonth : null,
+                  icon: const Icon(Icons.arrow_forward_ios),
+                  color: canGoNext
+                      ? AppTheme.textPrimary
+                      : AppTheme.textSecondary.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _WeekdayLabels(),
+        const SizedBox(height: 12),
+        Expanded(
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 1,
+              crossAxisSpacing: 1,
+            ),
+            itemCount: rows * 7,
+            itemBuilder: (context, index) {
+              final dayNumber = index - weekdayOffset + 1;
+              if (dayNumber < 1 || dayNumber > daysInMonth) {
+                return const SizedBox.shrink();
+              }
+              final date = DateTime(month.year, month.month, dayNumber);
+              final present = isPresent(date);
+              final absent = isAbsent(date);
+              final selectable = isSelectable(date);
+              final isToday = DateUtils.isSameDay(date, today);
+
+              final background = present
+                  ? AppTheme.textPrimary
+                  : absent
+                  ? AppTheme.error.withValues(alpha: 0.1)
+                  : Colors.transparent;
+
+              final textColor = present
+                  ? AppTheme.background
+                  : absent
+                  ? AppTheme.error
+                  : !selectable
+                  ? AppTheme.textSecondary.withValues(alpha: 0.2)
+                  : AppTheme.textPrimary;
+
+              return GestureDetector(
+                onTap: selectable ? () => onDayTap(date) : null,
+                onLongPress: selectable ? () => onDayLongPress(date) : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: background,
+                    border: Border.all(
+                      color: isToday
+                          ? AppTheme.textPrimary
+                          : AppTheme.border.withValues(alpha: 0.5),
+                      width: isToday ? 1.5 : 0.5,
                     ),
                   ),
-                );
-              },
-            ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$dayNumber',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 13,
+                      fontWeight: isToday || present
+                          ? FontWeight.w800
+                          : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -190,7 +169,7 @@ class CalendarView extends StatelessWidget {
 class _WeekdayLabels extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const labels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     return Row(
       children: labels
           .map(
@@ -198,58 +177,13 @@ class _WeekdayLabels extends StatelessWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(fontSize: 10),
               ),
             ),
           )
           .toList(),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-    this.enabled = true,
-  });
-
-  final IconData icon;
-  final VoidCallback? onTap;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        width: 40,
-        decoration: BoxDecoration(
-          color: enabled ? AppTheme.surfaceMuted : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: enabled
-                ? Colors.white.withOpacity(0.06)
-                : Colors.white.withOpacity(0.02),
-          ),
-          boxShadow: enabled
-              ? const [
-                  BoxShadow(
-                    color: Colors.black38,
-                    blurRadius: 10,
-                    offset: Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        child: Icon(
-          icon,
-          color: enabled
-              ? AppTheme.textPrimary
-              : AppTheme.textSecondary.withOpacity(0.2),
-        ),
-      ),
     );
   }
 }
