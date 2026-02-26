@@ -46,6 +46,11 @@ class NotificationService {
       android: androidDetails,
       iOS: iosDetails,
     );
-    await _plugin.show(0, 'Attendance Reminder', 'Are boi khai re', details);
+    await _plugin.show(
+      0,
+      'Attendance Reminder',
+      'Mark your attendance',
+      details,
+    );
   }
 }

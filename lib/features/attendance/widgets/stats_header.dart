@@ -40,98 +40,26 @@ class StatsHeader extends StatelessWidget {
                       context,
                     ).textTheme.labelSmall?.copyWith(letterSpacing: 1.2),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     '${percentage.toStringAsFixed(1)}%',
                     style: Theme.of(
                       context,
-                    ).textTheme.headlineMedium?.copyWith(fontSize: 40),
+                    ).textTheme.headlineMedium?.copyWith(fontSize: 36),
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: remainingToTarget > 0
-                      ? AppTheme.textPrimary.withValues(alpha: 0.1)
-                      : AppTheme.textSecondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: remainingToTarget > 0
-                        ? AppTheme.textPrimary.withValues(alpha: 0.3)
-                        : AppTheme.textSecondary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      remainingToTarget > 0 ? 'NEED ' : 'AHEAD',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 9,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      remainingToTarget > 0
-                          ? '$remainingToTarget'
-                          : '+${-remainingToTarget}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: remainingToTarget > 0
-                            ? AppTheme.textPrimary
-                            : Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _StatusBadge(remaining: remainingToTarget),
             ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.border,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: (totalPresent / totalPossible).clamp(0.0, 1.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: percentage >= 75
-                      ? AppTheme.textPrimary
-                      : Colors.orange,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              _StatItem(
-                label: 'PRESENT',
-                value: '$totalPresent',
-                color: AppTheme.textPrimary,
-              ),
+              _StatItem(label: 'PRESENT', value: '$totalPresent'),
               const SizedBox(width: 24),
-              _StatItem(
-                label: 'TOTAL',
-                value: '$totalPossible',
-                color: AppTheme.textSecondary,
-              ),
+              _StatItem(label: 'TOTAL', value: '$totalPossible'),
               const Spacer(),
-              _StatItem(
-                label: 'TARGET',
-                value: '${(totalPossible * 0.75).ceil()}',
-                color: AppTheme.textSecondary,
-              ),
+              _StatItem(label: 'NEED', value: '$remainingToTarget'),
             ],
           ),
         ],
@@ -140,35 +68,56 @@ class StatsHeader extends StatelessWidget {
   }
 }
 
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.remaining});
+
+  final int remaining;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSafe = remaining <= 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isSafe
+            ? Colors.green.withValues(alpha: 0.1)
+            : AppTheme.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSafe
+              ? Colors.green.withValues(alpha: 0.3)
+              : AppTheme.error.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        isSafe ? 'SAFE' : 'NEED $remaining',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: isSafe ? Colors.green : AppTheme.error,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _StatItem({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(letterSpacing: 0.8),
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
         const SizedBox(height: 2),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );

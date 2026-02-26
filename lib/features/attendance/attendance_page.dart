@@ -62,11 +62,14 @@ class _AttendancePageState extends State<AttendancePage> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                StatsHeader(
-                  totalPresent: controller.totalPresent,
-                  totalPossible: controller.totalPossibleDays,
-                  percentage: controller.attendancePercentage,
-                  remainingToTarget: controller.remainingToTarget,
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: StatsHeader(
+                    totalPresent: controller.totalPresent,
+                    totalPossible: controller.totalPossibleDays,
+                    percentage: controller.attendancePercentage,
+                    remainingToTarget: controller.remainingToTarget,
+                  ),
                 ),
                 Expanded(
                   child: Container(
